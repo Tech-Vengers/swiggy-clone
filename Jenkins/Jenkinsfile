@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   environment {
-    IMAGE = "Techvengers7788/swiggy:${BUILD_NUMBER}"
+    IMAGE = "techvengers7788/swiggy:${BUILD_NUMBER}"
   }
 
   stages {

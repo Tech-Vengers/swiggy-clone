@@ -34,29 +34,32 @@ pipeline {
       }
     }
 
-   stage("Docker Build & Push"){
-            steps{
-                script{
-                   withDockerRegistry(credentialsId: 'docker', toolName: 'docker'){   
-                       sh "docker build --build-t swiggy ."
-                       sh "docker tag netflix Techvengers7788/swiggy:latest "
-                       sh "docker push Techvengers7788/swiggy:latest "
-                    }
-                }
-            }
+    stage('Docker Build & Push') {
+      steps {
+        script {
+          withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {
+            sh """
+              docker build -t $IMAGE .
+              docker push $IMAGE
+            """
+          }
         }
-
-stage("TRIVY"){
-            steps{
-                sh "trivy image Techvengers7788/swiggy:latest > trivyimage.txt" 
-            }
-        }
-
-   stage('Deploy to container'){
-            steps{
-                sh 'docker run -d --name swiggy -p 8081:80 Techvengers7788/swiggy:latest'
-            }
-        }
-        
+      }
     }
-  
+
+    stage('Trivy Scan') {
+      steps {
+        sh 'trivy image $IMAGE > trivyimage.txt'
+      }
+    }
+
+    stage('Deploy Container') {
+      steps {
+        sh '''
+          docker rm -f swiggy || true
+          docker run -d --name swiggy -p 8081:80 $IMAGE
+        '''
+      }
+    }
+  }
+}

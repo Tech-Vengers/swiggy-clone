@@ -14,4 +14,8 @@ fi
   --scan . \
   --format HTML \
   --out dependency-check-report \
-  --nvdApiKey "$NVD_API_KEY"
+  --nvdApiKey "$NVD_API_KEY" \
+  --disableAssembly \
+  --disableOssIndex \
+  --exclude dependency-check/**
+

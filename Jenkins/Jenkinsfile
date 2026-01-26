@@ -33,24 +33,25 @@ stage(' Git Checkout') {
       }
     }
 
-   stage('Dependency Scan') {
+  stage('Dependency Scan') {
   steps {
     withCredentials([string(credentialsId: 'NVD_API_KEY', variable: 'NVD_API_KEY')]) {
       sh '''
       /opt/dependency-check/bin/dependency-check.sh \
-        --scan . \
+        --scan Swiggy_clone \
         --format HTML \
         --out dependency-check-report \
         --data /opt/dependency-check-data \
         --nvdApiKey $NVD_API_KEY \
         --disableOssIndex \
-        --disableNodeAuditAnalyzer \
-        --disableRetireJSAnalyzer
+        --disableNodeAudit \
+        --disableRetireJS \
         --failOnCVSS 11
       '''
     }
   }
 }
+
 
 
 

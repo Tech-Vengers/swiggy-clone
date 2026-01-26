@@ -46,7 +46,7 @@ stage(' Git Checkout') {
         script {
           withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {
             sh """
-              docker build -t $IMAGE .
+              docker build -t $IMAGE ./Swiggy_clone
               docker push $IMAGE
             """
           }

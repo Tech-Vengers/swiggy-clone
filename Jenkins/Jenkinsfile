@@ -1,0 +1,66 @@
+pipeline {
+  agent any
+
+  environment {
+    IMAGE = "dockerhub_user/swiggy:${BUILD_NUMBER}"
+  }
+
+  stages {
+
+    stage('Checkout') {
+      steps { git 'https://github.com/Tech-Vengers/swiggy-clone' }
+    }
+
+    stage('SonarQube') {
+      steps {
+        sh '''
+        sonar-scanner \
+        -Dsonar.projectKey=swiggy \
+        -Dsonar.host.url=http://localhost:9000 \
+        -Dsonar.login=$SONAR_TOKEN
+        '''
+      }
+    }
+
+    stage('Dependency Scan') {
+      steps { sh './security/dependency-check.sh' }
+    }
+
+    stage('Build Image') {
+      steps { sh 'docker build -t $IMAGE .' }
+    }
+
+    stage('Trivy Image Scan') {
+      steps { sh 'trivy image $IMAGE' }
+    }
+
+    stage('Push Image') {
+      steps {
+        sh '''
+        docker login -u $DOCKERHUB_USER -p $DOCKERHUB_PASS
+        docker push $IMAGE
+        '''
+      }
+    }
+
+    stage('Terraform Deploy') {
+      steps {
+        sh '''
+        cd terraform
+        terraform init
+        terraform apply -auto-approve -var="image=$IMAGE"
+        '''
+      }
+    }
+
+    stage('Switch Traffic') {
+      steps {
+        sh '''
+        aws elbv2 modify-listener \
+        --listener-arn $LISTENER_ARN \
+        --default-actions Type=forward,TargetGroupArn=$GREEN_TG
+        '''
+      }
+    }
+  }
+}

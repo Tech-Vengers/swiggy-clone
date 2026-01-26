@@ -36,10 +36,18 @@ stage(' Git Checkout') {
    stage('Dependency Scan') {
   steps {
     withCredentials([string(credentialsId: 'NVD_API_KEY', variable: 'NVD_API_KEY')]) {
-      sh './security/dependency-check.sh'
+      sh '''
+      ./dependency-check/bin/dependency-check.sh \
+        --scan . \
+        --format HTML \
+        --out dependency-check-report \
+        --data /opt/dependency-check-data \
+        --nvdApiKey $NVD_API_KEY
+      '''
     }
   }
 }
+
 
     stage('Docker Build & Push') {
       steps {

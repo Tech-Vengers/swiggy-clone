@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-DC_VERSION=8.4.0
+DC_VERSION=12.1.0
 DC_DIR="dependency-check"
 
 if [ ! -d "$DC_DIR" ]; then

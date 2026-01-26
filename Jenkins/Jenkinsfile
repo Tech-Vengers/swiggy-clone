@@ -19,7 +19,7 @@ pipeline {
         sonar-scanner \
         -Dsonar.projectKey=swiggy \
         -Dsonar.host.url=http://localhost:9000 \
-        -Dsonar.login=$SONAR_TOKEN
+        -Dsonar.login=$sonarqubetoken
         '''
       }
     }

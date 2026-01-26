@@ -35,7 +35,7 @@ stage(' Git Checkout') {
 
    stage('Dependency Scan') {
   steps {
-    withCredentials([string(credentialsId: 'nvd-api-key', variable: 'NVD_API_KEY')]) {
+    withCredentials([string(credentialsId: 'NVD_API_KEY', variable: 'NVD_API_KEY')]) {
       sh './security/dependency-check.sh'
     }
   }

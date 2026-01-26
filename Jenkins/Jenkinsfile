@@ -14,15 +14,18 @@ pipeline {
     }
 
     stage('SonarQube') {
-      steps {
-        sh '''
-        sonar-scanner \
-        -Dsonar.projectKey=swiggy \
-        -Dsonar.host.url=http://localhost:9000 \
-        -Dsonar.login=$sonarqubetoken
-        '''
-      }
+  environment {
+    SCANNER_HOME = tool 'sonar-scanner'
+  }
+  steps {
+    withSonarQubeEnv('sonarqube-server') {
+      sh """
+        ${SCANNER_HOME}/bin/sonar-scanner \
+        -Dsonar.projectKey=swiggy
+      """
     }
+  }
+}
 
     stage('Dependency Scan') {
       steps { sh './security/dependency-check.sh' }

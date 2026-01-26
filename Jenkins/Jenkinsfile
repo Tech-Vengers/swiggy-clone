@@ -8,7 +8,9 @@ pipeline {
   stages {
 
     stage('Checkout') {
-      steps { git 'https://github.com/Tech-Vengers/swiggy-clone' }
+      steps { 
+        git branch: 'main',
+        git 'https://github.com/Tech-Vengers/swiggy-clone' }
     }
 
     stage('SonarQube') {

@@ -12,6 +12,11 @@ pipeline {
         cleanWs()
       }
     }
+    
+stage(' Git Checkout') {
+      steps { git branch: 'main', url: 'https://github.com/Tech-Vengers/swiggy-clone' }
+    }
+
 
     stage('SonarQube Analysis') {
       environment {

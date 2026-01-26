@@ -64,7 +64,7 @@ stage(' Git Checkout') {
       steps {
         sh '''
           docker rm -f swiggy || true
-          docker run -d --name swiggy -p 8081:3000 $IMAGE
+          docker run -d --name swiggy -p 8081:3030 $IMAGE
         '''
       }
     }

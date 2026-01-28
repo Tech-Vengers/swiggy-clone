@@ -72,24 +72,18 @@ pipeline {
       }
     }
 
-    stage('Deploy to EKS') {
-      steps {
-        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
-          sh '''
-            aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER
-
-            # Update image in deployment
-            kubectl set image deployment/swiggy-deployment \
-              swiggy=$IMAGE
-
-            # Apply configs if first time
-            kubectl apply -f k8s/deployment.yaml
-            kubectl apply -f k8s/service.yaml
-
-            kubectl rollout status deployment/swiggy-deployment
-          '''
-        }
-      }
+    stage('Deploy to ECS') {
+  steps {
+    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
+      sh '''
+      aws ecs update-service \
+        --cluster swiggy-cluster \
+        --service swiggy-blue \
+        --force-new-deployment \
+        --region ap-south-1
+      '''
     }
+  }
+}
   }
 }

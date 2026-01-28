@@ -3,25 +3,24 @@ pipeline {
 
   environment {
     IMAGE = "techvengers7788/swiggy:${BUILD_NUMBER}"
+    AWS_REGION = "ap-south-1"
+    EKS_CLUSTER = "swiggy-eks-cluster"
   }
 
   stages {
 
     stage('Clean Workspace') {
-      steps {
-        cleanWs()
-      }
-    }
-    
-stage(' Git Checkout') {
-      steps { git branch: 'main', url: 'https://github.com/Tech-Vengers/swiggy-clone' }
+      steps { cleanWs() }
     }
 
+    stage('Git Checkout') {
+      steps {
+        git branch: 'main', url: 'https://github.com/Tech-Vengers/swiggy-clone'
+      }
+    }
 
     stage('SonarQube Analysis') {
-      environment {
-        SCANNER_HOME = tool 'sonar-scanner'
-      }
+      environment { SCANNER_HOME = tool 'sonar-scanner' }
       steps {
         withSonarQubeEnv('sonar-server') {
           sh """
@@ -33,27 +32,24 @@ stage(' Git Checkout') {
       }
     }
 
-  stage('Dependency Scan') {
-  steps {
-    withCredentials([string(credentialsId: 'NVD_API_KEY', variable: 'NVD_API_KEY')]) {
-      sh '''
-      /opt/dependency-check/bin/dependency-check.sh \
-        --scan Swiggy_clone \
-        --format HTML \
-        --out dependency-check-report \
-        --data /opt/dependency-check-data \
-        --nvdApiKey $NVD_API_KEY \
-        --disableOssIndex \
-        --disableNodeAudit \
-        --disableRetireJS \
-        --failOnCVSS 11
-      '''
+    stage('Dependency Scan') {
+      steps {
+        withCredentials([string(credentialsId: 'NVD_API_KEY', variable: 'NVD_API_KEY')]) {
+          sh '''
+          /opt/dependency-check/bin/dependency-check.sh \
+            --scan Swiggy_clone \
+            --format HTML \
+            --out dependency-check-report \
+            --data /opt/dependency-check-data \
+            --nvdApiKey $NVD_API_KEY \
+            --disableOssIndex \
+            --disableNodeAudit \
+            --disableRetireJS \
+            --failOnCVSS 11
+          '''
+        }
+      }
     }
-  }
-}
-
-
-
 
     stage('Docker Build & Push') {
       steps {
@@ -62,6 +58,8 @@ stage(' Git Checkout') {
             sh """
               docker build -t $IMAGE ./Swiggy_clone
               docker push $IMAGE
+              docker tag $IMAGE techvengers7788/swiggy:latest
+              docker push techvengers7788/swiggy:latest
             """
           }
         }
@@ -74,12 +72,23 @@ stage(' Git Checkout') {
       }
     }
 
-    stage('Deploy Container') {
+    stage('Deploy to EKS') {
       steps {
-        sh '''
-          docker rm -f swiggy || true
-          docker run -d --name swiggy -p 8081:80 $IMAGE
-        '''
+        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-creds']]) {
+          sh '''
+            aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER
+
+            # Update image in deployment
+            kubectl set image deployment/swiggy-deployment \
+              swiggy=$IMAGE
+
+            # Apply configs if first time
+            kubectl apply -f k8s/deployment.yaml
+            kubectl apply -f k8s/service.yaml
+
+            kubectl rollout status deployment/swiggy-deployment
+          '''
+        }
       }
     }
   }
